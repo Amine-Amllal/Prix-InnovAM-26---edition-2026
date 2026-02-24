@@ -1,0 +1,55 @@
+# =============================================================================
+# SIANA — requirements.txt
+# Dépendances Python pour le robot d'inspection TGV
+# Cible : NVIDIA Jetson Nano — JetPack 4.6+ (Ubuntu 18.04/20.04 aarch64)
+# =============================================================================
+
+# ── Communication réseau ──────────────────────────────────────────────────
+websockets>=12.0          # WebSocket serveur/client asyncio
+aiohttp>=3.9.0            # HTTP REST + streaming MJPEG async
+
+# ── Caméra ────────────────────────────────────────────────────────────────
+# OpenCV sur Jetson Nano : utiliser la version précompilée de JetPack
+# (inclut le support GStreamer + NVMM pour caméra CSI IMX219)
+# sudo apt install -y python3-opencv   ← version JetPack avec GStreamer
+# Pour caméra USB : pip install opencv-python-headless
+opencv-python-headless>=4.5.0   # fallback USB si version JetPack absente
+
+# ── Matériel Jetson Nano ──────────────────────────────────────────────────
+# Jetson.GPIO : équivalent RPi.GPIO pour Jetson (même API, broches BCM)
+Jetson.GPIO>=2.1.6         ; platform_machine == "aarch64"
+
+# ── Capteur batterie ──────────────────────────────────────────────────────
+pi-ina219>=1.4.1           # INA219 mesure courant/tension via I2C
+
+# ── Utilitaires ───────────────────────────────────────────────────────────
+numpy>=1.24.0              # traitement image (overlay caméra)
+
+# ── Développement / tests ─────────────────────────────────────────────────
+# Ces packages permettent de tester le code sur PC Windows/Linux sans matériel
+# (les modules GPIO/INA219 sont simulés automatiquement si absents)
+# pytest>=7.4.0
+# pytest-asyncio>=0.23.0
+
+# =============================================================================
+# Installation rapide sur Jetson Nano (JetPack 4.6+) :
+#
+#   sudo apt update
+#   sudo apt install -y python3-pip python3-venv python3-opencv
+#   python3 -m venv venv
+#   source venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Permissions GPIO (groupe jetson_gpio) :
+#   sudo groupadd -f -r gpio
+#   sudo usermod -a -G gpio $USER
+#   sudo cp /opt/nvidia/jetson-gpio/etc/99-gpio.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Lancement :
+#   sudo -E venv/bin/python main.py
+#
+# Ou avec systemd (démarrage automatique) :
+#   sudo cp siana.service /etc/systemd/system/
+#   sudo systemctl enable --now siana
+# =============================================================================

@@ -1,0 +1,21 @@
+[Unit]
+Description=SIANA — Robot Inspection TGV 2026 (Jetson Nano)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/siana/siana/robot-code
+ExecStart=/home/siana/siana/robot-code/venv/bin/python main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=siana-robot
+
+# Accès GPIO sans conflit
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

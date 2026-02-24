@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Siana — Robot d'Inspection Sous Caisse TGV</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- ======================== SIDEBAR ======================== -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="#0A6EFF"/>
+          <path d="M6 26 L18 10 L30 26" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 26 L10 20 M26 26 L26 20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="18" cy="10" r="2.5" fill="white"/>
+        </svg>
+        <div>
+          <div class="logo-title">SIANA</div>
+          <div class="logo-sub">TGV Inspection Robot</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section-label">Navigation</div>
+    <ul class="nav-list">
+      <li class="nav-item active" data-tab="dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        Dashboard
+      </li>
+      <li class="nav-item" data-tab="inspection">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        Inspection Live
+      </li>
+      <li class="nav-item" data-tab="evidence">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        Preuves & Validation
+      </li>
+      <li class="nav-item" data-tab="ai">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 17.93V18c0-.55-.45-1-1-1s-1 .45-1 1v1.93C7.06 19.48 4.52 16.94 4.07 14H6c.55 0 1-.45 1-1s-.45-1-1-1H4.07C4.52 9.06 7.06 6.52 10 6.07V8c0 .55.45 1 1 1s1-.45 1-1V6.07c2.94.45 5.48 2.99 5.93 5.93H16c-.55 0-1 .45-1 1s.45 1 1 1h1.93c-.45 2.94-2.99 5.48-5.93 5.93z"/></svg>
+        Système IA
+      </li>
+      <li class="nav-item" data-tab="architecture">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-12h3v4h-3V3z"/></svg>
+        Architecture
+      </li>
+      <li class="nav-item" data-tab="report">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        Rapport
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="nav-section-label">Système</div>
+      <div class="sys-status">
+        <div class="status-dot green"></div>
+        <span>Robot connecté</span>
+      </div>
+      <div class="sys-status">
+        <div class="status-dot green"></div>
+        <span>IA opérationnelle</span>
+      </div>
+      <div class="sys-status">
+        <div class="status-dot yellow"></div>
+        <span>WiFi — 94 Mbps</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================== MAIN ======================== -->
+  <main class="main-content">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
+        </button>
+        <div class="breadcrumb" id="breadcrumb">Tableau de bord</div>
+      </div>
+      <div class="topbar-right">
+        <div class="inspection-id">Session : <strong id="sessionId">INS-2026-0224-001</strong></div>
+        <div class="topbar-time" id="topbarTime"></div>
+        <div class="alert-bell" id="alertBell" title="Alertes IA">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="currentColor"/></svg>
+          <span class="badge" id="alertCount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ======================== TAB: DASHBOARD ======================== -->
+    <section class="tab-content active" id="tab-dashboard">
+      <div class="page-title">Tableau de bord</div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon blue"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/></svg></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpiDist">0.0 m</div>
+            <div class="kpi-label">Distance parcourue</div>
+          </div>
+          <div class="kpi-trend up">↑ En cours</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpiAnomalies">0</div>
+            <div class="kpi-label">Anomalies détectées</div>
+          </div>
+          <div class="kpi-trend neutral" id="kpiAnomaliesTrend">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpiValidated">0</div>
+            <div class="kpi-label">Anomalies validées</div>
+          </div>
+          <div class="kpi-trend neutral"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon orange"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpiFrames">0</div>
+            <div class="kpi-label">Frames analysées</div>
+          </div>
+          <div class="kpi-trend up">30 fps</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Live mini-feed -->
+        <div class="card video-mini-card">
+          <div class="card-header">
+            <span>Flux Caméra — Intel RealSense L515</span>
+            <div class="live-badge"><span class="dot-pulse"></span>LIVE</div>
+          </div>
+          <div class="mini-video-wrap" id="miniVideoWrap">
+            <canvas id="miniCanvas" width="480" height="270"></canvas>
+            <div class="video-overlay-stats">
+              <span id="miniPos">Pos: (0.00, 0.00)</span>
+              <span id="miniFps">30 fps</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart anomalies par type -->
+        <div class="card">
+          <div class="card-header">Anomalies par type détecté</div>
+          <div class="chart-wrap">
+            <canvas id="anom-chart" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Robot status -->
+        <div class="card robot-status-card">
+          <div class="card-header">État du robot</div>
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-label">Batterie</div>
+              <div class="progress-bar"><div class="progress-fill green" id="battBar" style="width:87%"></div></div>
+              <div class="status-val" id="battVal">87%</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Température CPU (Jetson)</div>
+              <div class="progress-bar"><div class="progress-fill orange" id="cpuBar" style="width:42%"></div></div>
+              <div class="status-val" id="cpuVal">42°C</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Latence réseau</div>
+              <div class="progress-bar"><div class="progress-fill blue" id="latBar" style="width:18%"></div></div>
+              <div class="status-val" id="latVal">18 ms</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Signal WiFi</div>
+              <div class="progress-bar"><div class="progress-fill green" id="wifiBar" style="width:94%"></div></div>
+              <div class="status-val" id="wifiVal">94%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline events -->
+        <div class="card timeline-card">
+          <div class="card-header">Événements récents</div>
+          <ul class="timeline" id="timeline"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== TAB: INSPECTION LIVE ======================== -->
+    <section class="tab-content" id="tab-inspection">
+      <div class="page-title">Inspection Live — Vue Opérateur</div>
+      <div class="inspection-layout">
+        <!-- Main video -->
+        <div class="card video-main-card">
+          <div class="card-header">
+            <span>Flux vidéo — 1920×1080 @ 30fps</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="live-badge"><span class="dot-pulse"></span>LIVE</div>
+              <button class="btn btn-sm btn-danger" id="btnAnomaly">⚠ Déclarer anomalie</button>
+              <button class="btn btn-sm btn-secondary" id="btnRemark">📷 Remarque</button>
+            </div>
+          </div>
+          <div class="main-video-wrap">
+            <canvas id="mainCanvas" width="854" height="480"></canvas>
+            <div class="ai-overlay-label" id="aiOverlayLabel"></div>
+          </div>
+          <div class="video-controls">
+            <div class="control-group">
+              <label>Vitesse robot</label>
+              <input type="range" id="speedSlider" min="0" max="100" value="30" />
+              <span id="speedVal">30%</span>
+            </div>
+            <div class="control-group">
+              <label>Zoom caméra</label>
+              <input type="range" id="zoomSlider" min="1" max="4" step="0.1" value="1" />
+              <span id="zoomVal">×1.0</span>
+            </div>
+            <div class="control-group">
+              <label>Mode IA</label>
+              <select id="aiMode">
+                <option value="continuous">Continu</option>
+                <option value="manual">Manuel</option>
+                <option value="off">Désactivé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side panel detections -->
+        <div class="side-panel">
+          <div class="card detection-card">
+            <div class="card-header">Détections IA — YOLOv8</div>
+            <div class="detection-list" id="detectionList">
+              <div class="empty-state">Aucune détection en attente</div>
+            </div>
+          </div>
+          <div class="card position-card">
+            <div class="card-header">Position Robot (SLAM)</div>
+            <div class="position-display">
+              <div class="pos-row"><span>X</span><span id="posX">0.00 m</span></div>
+              <div class="pos-row"><span>Y</span><span id="posY">0.00 m</span></div>
+              <div class="pos-row"><span>θ</span><span id="posTheta">0.0°</span></div>
+              <div class="pos-row"><span>Vitesse</span><span id="posSpeed">0.0 cm/s</span></div>
+            </div>
+            <canvas id="slamCanvas" width="240" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== TAB: EVIDENCE / VALIDATION ======================== -->
+    <section class="tab-content" id="tab-evidence">
+      <div class="page-title">Preuves & Validation Humaine (HITL)</div>
+      <div class="evidence-toolbar">
+        <div class="filter-group">
+          <button class="btn btn-sm btn-primary active-filter" data-filter="all" id="filterAll">Toutes (<span id="countAll">0</span>)</button>
+          <button class="btn btn-sm btn-secondary" data-filter="pending" id="filterPending">En attente (<span id="countPending">0</span>)</button>
+          <button class="btn btn-sm btn-secondary" data-filter="confirmed" id="filterConfirmed">Confirmées (<span id="countConfirmed">0</span>)</button>
+          <button class="btn btn-sm btn-secondary" data-filter="rejected" id="filterRejected">Rejetées (<span id="countRejected">0</span>)</button>
+        </div>
+        <button class="btn btn-sm btn-success" id="btnValidateAll">✓ Valider toutes sélectionnées</button>
+      </div>
+      <div class="evidence-grid" id="evidenceGrid">
+        <!-- Filled by JS -->
+      </div>
+    </section>
+
+    <!-- ======================== TAB: AI ======================== -->
+    <section class="tab-content" id="tab-ai">
+      <div class="page-title">Système IA — YOLOv8 Detection Pipeline</div>
+      <div class="ai-layout">
+        <div class="card ai-pipeline-card">
+          <div class="card-header">Pipeline IA Global</div>
+          <div class="pipeline-steps">
+            <div class="pipeline-step active">
+              <div class="step-icon">📷</div>
+              <div class="step-label">Acquisition</div>
+              <div class="step-desc">Intel RealSense L515<br/>1920×1080 @ 30fps</div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step active">
+              <div class="step-icon">🔧</div>
+              <div class="step-label">Prétraitement</div>
+              <div class="step-desc">Resize 640×640<br/>Normalisation</div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step active">
+              <div class="step-icon">🤖</div>
+              <div class="step-label">YOLOv8n</div>
+              <div class="step-desc">Transfer Learning<br/>MVTec Dataset</div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step active">
+              <div class="step-icon">🔎</div>
+              <div class="step-label">Post-traitement</div>
+              <div class="step-desc">NMS, Seuillage<br/>conf ≥ 0.5</div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step highlight">
+              <div class="step-icon">👤</div>
+              <div class="step-label">Validation Humaine</div>
+              <div class="step-desc">HITL — Opérateur<br/>décide</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-stats-grid">
+          <div class="card ai-metric-card">
+            <div class="ai-metric-title">Classes d'anomalies</div>
+            <ul class="anomaly-classes">
+              <li><span class="class-badge crack">crack</span> Fissure structure</li>
+              <li><span class="class-badge scratch">scratch</span> Rayure profonde</li>
+              <li><span class="class-badge corrosion">corrosion</span> Oxydation / rouille</li>
+              <li><span class="class-badge loose">loose_part</span> Pièce desserrée</li>
+              <li><span class="class-badge missing">missing_bolt</span> Boulon manquant</li>
+              <li><span class="class-badge deform">deformation</span> Déformation</li>
+            </ul>
+          </div>
+          <div class="card ai-metric-card">
+            <div class="ai-metric-title">Métriques du modèle PoC</div>
+            <div class="metrics-table">
+              <div class="metric-row"><span>Modèle</span><strong>YOLOv8n</strong></div>
+              <div class="metric-row"><span>Dataset</span><strong>MVTec AD</strong></div>
+              <div class="metric-row"><span>mAP@0.5</span><strong id="mapVal">0.847</strong></div>
+              <div class="metric-row"><span>Précision</span><strong>0.891</strong></div>
+              <div class="metric-row"><span>Rappel</span><strong>0.823</strong></div>
+              <div class="metric-row"><span>Inférence GPU</span><strong>&lt; 15 ms</strong></div>
+              <div class="metric-row"><span>Seuil conf.</span><strong>0.50</strong></div>
+            </div>
+          </div>
+          <div class="card ai-metric-card" style="grid-column: span 2;">
+            <div class="ai-metric-title">Courbe Précision / Rappel (simulée)</div>
+            <canvas id="prChart" height="160"></canvas>
+          </div>
+        </div>
+
+        <div class="card ai-mapping-card">
+          <div class="card-header">Mapping MVTec → Anomalies Ferroviaires</div>
+          <table class="mapping-table">
+            <thead><tr><th>Catégorie MVTec</th><th>Anomalie ferroviaire cible</th><th>Pertinence</th></tr></thead>
+            <tbody>
+              <tr><td>Metal nut — scratch</td><td>Rayure boulonnerie</td><td><span class="tag high">Haute</span></td></tr>
+              <tr><td>Screw — crack</td><td>Fissure vissage</td><td><span class="tag high">Haute</span></td></tr>
+              <tr><td>Tile — crack</td><td>Fissure structure caisse</td><td><span class="tag high">Haute</span></td></tr>
+              <tr><td>Leather — fold</td><td>Déformation revêtement</td><td><span class="tag medium">Moyenne</span></td></tr>
+              <tr><td>Grid — bent</td><td>Grille/protection tordue</td><td><span class="tag medium">Moyenne</span></td></tr>
+              <tr><td>Cable — cut</td><td>Câblage endommagé</td><td><span class="tag high">Haute</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== TAB: ARCHITECTURE ======================== -->
+    <section class="tab-content" id="tab-architecture">
+      <div class="page-title">Architecture Logicielle & Réseau</div>
+      <div class="arch-layout">
+        <div class="card arch-diagram-card">
+          <div class="card-header">Architecture Distribuée</div>
+          <div class="arch-diagram">
+            <!-- Robot Side -->
+            <div class="arch-node robot-node">
+              <div class="arch-node-title">🤖 Robot Mobile (Jetson Nano)</div>
+              <div class="arch-modules">
+                <div class="arch-mod cam">📷 Module Vision<br/><small>RealSense L515</small></div>
+                <div class="arch-mod slam">🗺 Module SLAM<br/><small>Localisation (x,y,θ)</small></div>
+                <div class="arch-mod teleop">🕹 Téléopération<br/><small>RX commandes</small></div>
+                <div class="arch-mod safety">🛡 Sûreté<br/><small>Watchdog/E-Stop</small></div>
+                <div class="arch-mod buffer">💾 Buffer Local<br/><small>Cache réseau</small></div>
+              </div>
+            </div>
+
+            <!-- Network -->
+            <div class="arch-network">
+              <div class="net-channel primary">
+                <div class="net-label">WiFi 5 GHz</div>
+                <div class="net-arrow">⟷</div>
+                <div class="net-proto">TCP/IP<br/>RTSP Stream<br/>WebSocket</div>
+              </div>
+              <div class="net-channel fallback">
+                <div class="net-label">4G/5G (Fallback)</div>
+                <div class="net-arrow">⟷</div>
+                <div class="net-proto">LTE/NR<br/>Auto-basculement</div>
+              </div>
+            </div>
+
+            <!-- Station Side -->
+            <div class="arch-node station-node">
+              <div class="arch-node-title">🖥 Station de Contrôle (RTX GPU)</div>
+              <div class="arch-modules">
+                <div class="arch-mod ui">🖥 Interface Opérateur<br/><small>Video + Commandes</small></div>
+                <div class="arch-mod yolo">🤖 Inférence IA<br/><small>YOLOv8 GPU</small></div>
+                <div class="arch-mod storage">🗄 Stockage<br/><small>Preuves + Métadonnées</small></div>
+                <div class="arch-mod validation">✅ Validation HITL<br/><small>Opérateur decide</small></div>
+                <div class="arch-mod report">📄 Rapport PDF<br/><small>Génération auto</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-info-grid">
+          <div class="card">
+            <div class="card-header">Protocoles Réseau</div>
+            <div class="proto-list">
+              <div class="proto-item"><span class="proto-badge">RTSP</span> Streaming vidéo HD</div>
+              <div class="proto-item"><span class="proto-badge">WebSocket</span> Téléopération temps réel</div>
+              <div class="proto-item"><span class="proto-badge">HTTPS</span> API REST — données</div>
+              <div class="proto-item"><span class="proto-badge">SSH</span> Admin & maintenance</div>
+              <div class="proto-item"><span class="proto-badge">ROS2</span> Communication interne</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Matériel</div>
+            <div class="hw-list">
+              <div class="hw-item"><span class="hw-badge robot">ROBOT</span> Jetson Nano 4GB + RealSense L515</div>
+              <div class="hw-item"><span class="hw-badge station">STATION</span> NVIDIA RTX ≥ 3060, RAM ≥ 32 Go, SSD NVMe</div>
+              <div class="hw-item"><span class="hw-badge net">RÉSEAU</span> WiFi 5 GHz + dongle 4G/5G</div>
+            </div>
+          </div>
+          <div class="card" style="grid-column: span 2;">
+            <div class="card-header">Structure de Stockage des Données</div>
+            <pre class="storage-tree">inspection_2026-02-24_001/
+├── metadata.json          ← session, opérateur, TGV ref.
+├── preuves/
+│   ├── anomalie_001.jpg   ← image preuve
+│   ├── anomalie_001.json  ← timestamp, pos (SLAM), type, score, source
+│   └── ...
+├── remarques/
+│   ├── remarque_001.jpg
+│   ├── remarque_001.json  ← timestamp, pos, description obligatoire
+│   └── ...
+└── rapport_final.pdf      ← généré après validation HITL</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== TAB: REPORT ======================== -->
+    <section class="tab-content" id="tab-report">
+      <div class="page-title">Rapport d'Inspection</div>
+      <div class="report-layout">
+        <div class="card report-preview">
+          <div class="card-header">
+            <span>Aperçu du rapport</span>
+            <button class="btn btn-sm btn-primary" id="btnGenerateReport">📄 Générer rapport PDF</button>
+          </div>
+          <div class="report-doc" id="reportDoc">
+            <div class="report-header-section">
+              <div class="report-logo">SIANA</div>
+              <div class="report-title-block">
+                <div class="report-main-title">RAPPORT D'INSPECTION SOUS CAISSE TGV</div>
+                <div class="report-subtitle">Confidentiel — Usage interne SNCF</div>
+              </div>
+            </div>
+            <hr class="report-hr"/>
+            <div class="report-meta-grid">
+              <div><strong>Session :</strong> <span id="rSessionId">INS-2026-0224-001</span></div>
+              <div><strong>Date :</strong> <span id="rDate">24/02/2026</span></div>
+              <div><strong>Opérateur :</strong> AMLLAL Amine</div>
+              <div><strong>Référence TGV :</strong> TGV-2026-DUPLEX-042</div>
+              <div><strong>Distance inspectée :</strong> <span id="rDist">0.0 m</span></div>
+              <div><strong>Durée :</strong> <span id="rDuration">00:00</span></div>
+            </div>
+            <hr class="report-hr"/>
+            <div class="report-section-title">Résumé Exécutif</div>
+            <div class="report-summary" id="reportSummary">
+              Aucune anomalie confirmée pour le moment. Lancez l'inspection pour générer des données.
+            </div>
+            <hr class="report-hr"/>
+            <div class="report-section-title">Anomalies Confirmées</div>
+            <table class="report-table" id="reportTable">
+              <thead>
+                <tr>
+                  <th>#</th><th>Type</th><th>Confiance IA</th><th>Position (x,y)</th><th>Horodatage</th><th>Source</th><th>Statut</th>
+                </tr>
+              </thead>
+              <tbody id="reportTableBody">
+                <tr><td colspan="7" style="text-align:center;opacity:0.5">—</td></tr>
+              </tbody>
+            </table>
+            <hr class="report-hr"/>
+            <div class="report-section-title">Conclusion & Recommandations</div>
+            <div class="report-conclusion" id="reportConclusion">
+              En attente de validation des preuves par l'opérateur.
+            </div>
+            <div class="report-signature">
+              <div>Validé par : _________________</div>
+              <div>Date : _________________</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================== MODALS ======================== -->
+  <!-- Anomaly Declaration Modal -->
+  <div class="modal-overlay" id="anomalyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>⚠ Déclaration d'anomalie (Manuel)</span>
+        <button class="modal-close" id="closeAnomalyModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Type d'anomalie</label>
+        <select id="manualAnoType">
+          <option value="crack">Fissure (crack)</option>
+          <option value="scratch">Rayure (scratch)</option>
+          <option value="corrosion">Corrosion</option>
+          <option value="loose_part">Pièce desserrée</option>
+          <option value="missing_bolt">Boulon manquant</option>
+          <option value="deformation">Déformation</option>
+        </select>
+        <label>Sévérité</label>
+        <select id="manualSeverity">
+          <option value="low">Faible</option>
+          <option value="medium">Moyenne</option>
+          <option value="high">Haute</option>
+          <option value="critical">Critique</option>
+        </select>
+        <label>Description</label>
+        <textarea id="manualDesc" rows="3" placeholder="Décrivez l'anomalie observée..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelAnomalyModal">Annuler</button>
+        <button class="btn btn-danger" id="confirmAnomalyModal">⚠ Confirmer anomalie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remark Modal -->
+  <div class="modal-overlay" id="remarkModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>📷 Capture Remarque</span>
+        <button class="modal-close" id="closeRemarkModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Description / Justification <span style="color:#e55">(Obligatoire)</span></label>
+        <textarea id="remarkDesc" rows="3" placeholder="Décrivez la remarque (non-anomalie)..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelRemarkModal">Annuler</button>
+        <button class="btn btn-primary" id="confirmRemarkModal">📷 Enregistrer remarque</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Alert Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
