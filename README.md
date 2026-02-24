@@ -1,8 +1,12 @@
 # SIANA — Robot d'Inspection Sous Caisse TGV
 **Prix InnovAM'26 | ENSAM-Meknès**
 
+[![GitHub](https://img.shields.io/badge/GitHub-Prix--InnovAM--26-blue?logo=github)](https://github.com/Amine-Amllal/Prix-InnovAM-26---edition-2026)
+
 Système logiciel complet pour l'automatisation de l'inspection visuelle sous caisse des rames à grande vitesse marocaines (RGVM).  
 Remplace l'inspection manuelle ES (~1 h/opérateur) par un robot autonome téléopéré avec détection d'anomalies assistée par IA.
+
+> **Dépôt GitHub :** https://github.com/Amine-Amllal/Prix-InnovAM-26---edition-2026
 
 ---
 
@@ -153,20 +157,61 @@ web-poc/
 
 ---
 
-## `Notebook/` — Pipeline IA
+## `Notebook/` — Pipeline IA (`siana.ipynb`)
 
-Notebook Jupyter documentant le pipeline de détection d'anomalies YOLOv8.
+Notebook Jupyter documentant le **fine-tuning de YOLOv8** sur le dataset MVTec AD pour la détection d'anomalies ferroviaires, depuis la préparation des données jusqu'au rapport d'inspection opérationnel.  
+Le modèle **YOLOv8n pré-entraîné (COCO)** est ré-entraîné (fine-tuning par transfer learning) sur 6 classes d'anomalies ferroviaires propres à SIANA, sans avoir besoin d'un dataset ferroviaire annoté.  
+Reproductible sur **Kaggle Free Tier** (GPU P100/T4 ou CPU) sans modification.
 
 ```
 Notebook/
-└── siana.ipynb   # YOLOv8 fine-tuning, détection, métriques
+└── siana.ipynb   # Pipeline YOLOv8 bout-en-bout
 ```
 
-**Contenu :**
-- Fine-tuning YOLOv8n sur dataset MVTec AD (anomalies industrielles)
-- Mapping sémantique MVTec → classes ferroviaires SIANA
-- Évaluation : mAP@0.5 = 0.847 | Précision = 0.891 | Rappel = 0.823
-- Inférence GPU < 15 ms (RTX 3060)
+### Pipeline automatisé (étapes)
+
+1. **Exploration du dataset MVTec AD** — détection automatique du chemin, comptage des images, statistiques par catégorie.
+2. **Conversion masques → bounding boxes YOLO** — les masques binaires pixel-level sont transformés en annotations YOLO (`class_id x_center y_center width height`) par analyse de composantes connexes. Un filtre de bruit élimine les composantes inférieures à 0,05 % de la surface.
+3. **Split stratifié** — 70 % / 15 % / 15 % (train/val/test), distribution par classe respectée.
+4. **Fine-tuning YOLOv8n** — transfer learning sur les 6 classes ferroviaires SIANA.
+5. **Évaluation** — matrice de confusion, courbe Précision/Rappel, métriques globales.
+6. **Rapport d'inspection** — pour chaque image, le système génère un statut global et la liste des anomalies détectées avec score de confiance et bounding box.
+
+### Mapping sémantique MVTec AD → classes ferroviaires
+
+| ID | Classe ferroviaire | Défauts MVTec AD correspondants |
+|---|---|---|
+| 0 | **Fissure** | crack, broken, cut_\*, broken_teeth |
+| 1 | **Corrosion** | color, contamination, stain, faulty_imprint |
+| 2 | **Fuite** | oil, liquid, glue, glue_strip |
+| 3 | **Pièce manquante** | hole, missing_wire, missing_cable, cut_lead |
+| 4 | **Pièce desserrée** | bent, flip, misplaced, poke, bent_wire |
+| 5 | **Usure** | scratch, rough, thread, combined |
+
+### Grille de sévérité intégrée
+
+| Classe | Sévérité | Action déclenchée |
+|---|---|---|
+| Fissure | 🔴 CRITIQUE | Alerte immédiate — immobilisation |
+| Fuite | 🔴 CRITIQUE | Alerte immédiate — immobilisation |
+| Pièce manquante | 🔴 CRITIQUE | Alerte immédiate — immobilisation |
+| Corrosion | 🟠 MAJEUR | Maintenance prioritaire planifiée |
+| Pièce desserrée | 🟠 MAJEUR | Maintenance prioritaire planifiée |
+| Usure | 🟡 MINEUR | Surveillance — maintenance préventive |
+
+### Métriques du modèle (PoC)
+
+| Métrique | Valeur |
+|---|---|
+| mAP@0.5 | **0.847** |
+| Précision | **0.891** |
+| Rappel | **0.823** |
+| Inférence GPU (T4/P100) | < 15 ms |
+
+### Limites et feuille de route
+
+- MVTec AD est un dataset de laboratoire — les performances sur images réelles d'inspection sous TGV seront différentes.  
+- Prochaines étapes : dataset ferroviaire dédié (> 5 000 images annotées), passage à YOLOv8s/m, segmentation d'instance (YOLOv8-seg), intégration TensorRT sur **Jetson Orin Nano** (< 10 ms/image).
 
 ```bash
 pip install ultralytics jupyter
